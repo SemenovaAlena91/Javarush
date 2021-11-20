@@ -2,35 +2,69 @@ package com.javarush.task.task30.task3008;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.Map;
 
 public class Server {
-    /*1) В класс Server приватный статический вложенный класс Handler, унаследованный от Thread.
-2) В класс Handler поле socket типа Socket.
-3) В класс Handler конструктор, принимающий в качестве параметра Socket и инициализирующий им соответствующее поле класса.
-4) Метод main класса Server, должен:
+    private static Map<String, Connection> connectionMap = new java.util.concurrent.ConcurrentHashMap<String, Connection>();
+/*Класс Handler должен реализовывать протокол общения с клиентом.
+Выделим из протокола отдельные этапы и реализуем их с помощью отдельных методов:
 
-а) Запрашивать порт сервера, используя ConsoleHelper.
-б) Создавать серверный сокет java.net.ServerSocket, используя порт из предыдущего пункта.
-в) Выводить сообщение, что сервер запущен.
-г) В бесконечном цикле слушать и принимать входящие сокетные соединения только что созданного серверного сокета.
-д) Создавать и запускать новый поток Handler, передавая в конструктор сокет из предыдущего пункта.
-е) После создания потока обработчика Handler переходить на новый шаг цикла.
-ж) Предусмотреть закрытие серверного сокета в случае возникновения исключения.
-з) Если исключение Exception все же произошло, поймать его и вывести сообщение об ошибке.
+Этап первый - это этап рукопожатия (знакомства сервера с клиентом).
+Реализуем его с помощью приватного метода String serverHandshake(Connection connection) throws IOException, ClassNotFoundException .
+Метод в качестве параметра принимает соединение connection, а возвращает имя нового клиента.
 
-
-Requirements:
-1. В классе Server должен быть создан приватный статический класс Handler, унаследованный от класса Thread.
-2. В классе Handler должно быть создано поле socket типа Socket.
-3. Конструктор класса Handler должен принимать один параметр типа Socket и инициализировать поле socket.
-4. Метод main должен считывать с клавиатуры порт сервера используя метод readInt класса ConsoleHelper.
-5. Метод main должен корректно реализовывать бесконечный цикл описанный в условии задачи.*/
+Реализация метода должна:
+1) Сформировать и отправить команду запроса имени пользователя
+2) Получить ответ клиента
+3) Проверить, что получена команда с именем пользователя
+4) Достать из ответа имя, проверить, что оно не пустое и пользователь с таким именем еще не подключен (используй connectionMap)
+5) Добавить нового пользователя и соединение с ним в connectionMap
+6) Отправить клиенту команду информирующую, что его имя принято
+7) Если какая-то проверка не прошла, заново запросить имя клиента
+8) Вернуть принятое имя в качестве возвращаемого значения*/
 
     private static class Handler extends Thread{
         private Socket socket;
 
         private Handler(Socket socket){
             this.socket = socket;
+        }
+
+        private  String serverHandshake(Connection connection) throws IOException, ClassNotFoundException{
+
+            while (true){
+                connection.send(new Message(MessageType.NAME_REQUEST));
+
+                Message message = connection.receive();
+
+                if(message.getType() != MessageType.USER_NAME){
+                    ConsoleHelper.writeMessage("тип сообщения неверный");
+                    continue;
+                }
+                String userName = message.getData();
+                if (userName.isEmpty()){
+                    ConsoleHelper.writeMessage("имя пользователя пустое");
+                    continue;
+                }
+                if (connectionMap.containsKey(userName)){
+                    ConsoleHelper.writeMessage("полученное имя пользователя уже есть в списке");
+                    continue;
+                }
+                connectionMap.put(userName,connection);
+                connection.send(new Message(MessageType.NAME_ACCEPTED));
+                return userName;
+            }
+
+        };
+}
+
+    public static void sendBroadcastMessage(Message message){
+        for (Connection connection : connectionMap.values()) {
+            try {
+                connection.send(message);
+            } catch (IOException e) {
+                ConsoleHelper.writeMessage("не удалось отправить сообщение");
+            }
         }
     }
 
