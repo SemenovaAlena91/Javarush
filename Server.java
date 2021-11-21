@@ -17,7 +17,7 @@ public class Server {
         }
 
         private  String serverHandshake(Connection connection) throws IOException, ClassNotFoundException{
-        /*метод, реализующий рукопожатие с клиентом, сохраняя имя нового клиента*/
+        /*метод, реализующий рукопожатие с клиентом,  сохраняя имя нового клиента*/
             while (true){
                 connection.send(new Message(MessageType.NAME_REQUEST));
 
