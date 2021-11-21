@@ -7,9 +7,10 @@ import java.util.Map;
 
 public class Server {
     private static Map<String, Connection> connectionMap = new java.util.concurrent.ConcurrentHashMap<String, Connection>();
-/*Класс Handler должен реализовывать протокол общения с клиентом.*/
 
     private static class Handler extends Thread{
+        /*Класс Handler должен реализовывать протокол общения с клиентом.*/
+
         private Socket socket;
 
         private Handler(Socket socket){
@@ -42,6 +43,20 @@ public class Server {
             }
         };
 
+        @Override
+        public void run(){
+            ConsoleHelper.writeMessage("Установлено новое соединение с удаленным адресом" + socket.getRemoteSocketAddress());
+            try(Connection connection = new Connection(socket)){
+                String userName = serverHandshake(connection);
+                sendBroadcastMessage(new Message(MessageType.USER_ADDED, userName));
+                notifyUsers(connection, userName);
+                serverMainLoop(connection, userName);
+                if(userName != null && connectionMap.containsKey(userName)) connectionMap.remove(userName);
+                sendBroadcastMessage(new Message(MessageType.USER_REMOVED, userName));
+            }catch (ClassNotFoundException | IOException e){
+
+            }
+        }
 
         private void notifyUsers(Connection connection, String userName) throws IOException{
             /*отправка клиенту (новому участнику) информации об остальных клиентах (участниках) чата.*/
@@ -65,21 +80,6 @@ public class Server {
                     ConsoleHelper.writeMessage("Произошла ошибка. Некорректный тип сообщения");
                 }
             }
-        }
-
-        @Override
-        public void run(){
-            ConsoleHelper.writeMessage("Установлено новое соединение с удаленным адресом" + socket.getRemoteSocketAddress());
-            try(Connection connection = new Connection(socket)){
-                    String userName = serverHandshake(connection);
-                    sendBroadcastMessage(new Message(MessageType.USER_ADDED, userName));
-                    notifyUsers(connection, userName);
-                    serverMainLoop(connection, userName);
-                    if(userName != null && connectionMap.containsKey(userName)) connectionMap.remove(userName);
-                    sendBroadcastMessage(new Message(MessageType.USER_REMOVED, userName));
-                }catch (ClassNotFoundException | IOException e){
-
-                }
         }
     }
 
