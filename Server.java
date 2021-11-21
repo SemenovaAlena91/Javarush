@@ -2,6 +2,7 @@ package com.javarush.task.task30.task3008;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketAddress;
 import java.util.Map;
 
 public class Server {
@@ -16,7 +17,7 @@ public class Server {
         }
 
         private  String serverHandshake(Connection connection) throws IOException, ClassNotFoundException{
-
+        /*метод, реализующий рукопожатие с клиентом, сохраняя имя нового клиента*/
             while (true){
                 connection.send(new Message(MessageType.NAME_REQUEST));
 
@@ -65,7 +66,22 @@ public class Server {
                 }
             }
         }
-}
+
+        @Override
+        public void run(){
+            ConsoleHelper.writeMessage("Установлено новое соединение с удаленным адресом" + socket.getRemoteSocketAddress());
+            try(Connection connection = new Connection(socket)){
+                    String userName = serverHandshake(connection);
+                    sendBroadcastMessage(new Message(MessageType.USER_ADDED, userName));
+                    notifyUsers(connection, userName);
+                    serverMainLoop(connection, userName);
+                    if(userName != null && connectionMap.containsKey(userName)) connectionMap.remove(userName);
+                    sendBroadcastMessage(new Message(MessageType.USER_REMOVED, userName));
+                }catch (ClassNotFoundException | IOException e){
+
+                }
+        }
+    }
 
     public static void sendBroadcastMessage(Message message){
         for (Connection connection : connectionMap.values()) {
