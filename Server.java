@@ -6,22 +6,7 @@ import java.util.Map;
 
 public class Server {
     private static Map<String, Connection> connectionMap = new java.util.concurrent.ConcurrentHashMap<String, Connection>();
-/*Класс Handler должен реализовывать протокол общения с клиентом.
-Выделим из протокола отдельные этапы и реализуем их с помощью отдельных методов:
-
-Этап первый - это этап рукопожатия (знакомства сервера с клиентом).
-Реализуем его с помощью приватного метода String serverHandshake(Connection connection) throws IOException, ClassNotFoundException .
-Метод в качестве параметра принимает соединение connection, а возвращает имя нового клиента.
-
-Реализация метода должна:
-1) Сформировать и отправить команду запроса имени пользователя
-2) Получить ответ клиента
-3) Проверить, что получена команда с именем пользователя
-4) Достать из ответа имя, проверить, что оно не пустое и пользователь с таким именем еще не подключен (используй connectionMap)
-5) Добавить нового пользователя и соединение с ним в connectionMap
-6) Отправить клиенту команду информирующую, что его имя принято
-7) Если какая-то проверка не прошла, заново запросить имя клиента
-8) Вернуть принятое имя в качестве возвращаемого значения*/
+/*Класс Handler должен реализовывать протокол общения с клиентом.*/
 
     private static class Handler extends Thread{
         private Socket socket;
@@ -54,8 +39,20 @@ public class Server {
                 connection.send(new Message(MessageType.NAME_ACCEPTED));
                 return userName;
             }
-
         };
+
+
+        private void notifyUsers(Connection connection, String userName) throws IOException{
+            /*отправка новому участнику информации об остальных участниках чата.*/
+
+            for (Map.Entry<String, Connection> e:
+                connectionMap.entrySet()) {
+                String currentUserName = e.getKey();
+                if(!userName.equals(currentUserName)){
+                    connection.send(new Message(MessageType.USER_ADDED,currentUserName));
+                }
+            }
+        }
 }
 
     public static void sendBroadcastMessage(Message message){
