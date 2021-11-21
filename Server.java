@@ -23,16 +23,16 @@ public class Server {
                 Message message = connection.receive();
 
                 if(message.getType() != MessageType.USER_NAME){
-                    ConsoleHelper.writeMessage("тип сообщения неверный");
+                    ConsoleHelper.writeMessage("Тип сообщения неверный");
                     continue;
                 }
                 String userName = message.getData();
                 if (userName.isEmpty()){
-                    ConsoleHelper.writeMessage("имя пользователя пустое");
+                    ConsoleHelper.writeMessage("Имя пользователя пустое");
                     continue;
                 }
                 if (connectionMap.containsKey(userName)){
-                    ConsoleHelper.writeMessage("полученное имя пользователя уже есть в списке");
+                    ConsoleHelper.writeMessage("Полученное имя пользователя уже есть в списке");
                     continue;
                 }
                 connectionMap.put(userName,connection);
@@ -43,13 +43,25 @@ public class Server {
 
 
         private void notifyUsers(Connection connection, String userName) throws IOException{
-            /*отправка новому участнику информации об остальных участниках чата.*/
+            /*отправка клиенту (новому участнику) информации об остальных клиентах (участниках) чата.*/
 
             for (Map.Entry<String, Connection> e:
                 connectionMap.entrySet()) {
                 String currentUserName = e.getKey();
                 if(!userName.equals(currentUserName)){
                     connection.send(new Message(MessageType.USER_ADDED,currentUserName));
+                }
+            }
+        }
+
+        private void serverMainLoop(Connection connection, String userName) throws IOException, ClassNotFoundException {
+            /*главный цикл обработки сообщений сервером.*/
+            while (true){
+                Message receivedMessage = connection.receive();
+                if(receivedMessage.getType() == MessageType.TEXT){
+                    sendBroadcastMessage(new Message(  MessageType.TEXT, userName + ": " + receivedMessage.getData()));
+                }else {
+                    ConsoleHelper.writeMessage("Произошла ошибка. Некорректный тип сообщения");
                 }
             }
         }
@@ -60,7 +72,7 @@ public class Server {
             try {
                 connection.send(message);
             } catch (IOException e) {
-                ConsoleHelper.writeMessage("не удалось отправить сообщение");
+                ConsoleHelper.writeMessage("Не удалось отправить сообщение");
             }
         }
     }
@@ -69,7 +81,7 @@ public class Server {
         int port = ConsoleHelper.readInt();
         try(ServerSocket serverSocket = new java.net.ServerSocket(port)){
 
-            ConsoleHelper.writeMessage("сервер запущен");
+            ConsoleHelper.writeMessage("Сервер запущен");
 
             while (true){
                 Socket socket = serverSocket.accept();
@@ -77,7 +89,7 @@ public class Server {
                 handler.start();
             }
         }catch (IOException e){
-            ConsoleHelper.writeMessage("произошла ошибка");
+            ConsoleHelper.writeMessage("Произошла ошибка");
 
         }
     }
