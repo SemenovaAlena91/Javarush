@@ -49,4 +49,40 @@ public class Client {
     public class SocketThread extends Thread{
 
     }
+
+    public void run(){
+        SocketThread socketThread = getSocketThread();
+        socketThread.setDaemon(true);
+        socketThread.start();
+
+                try{
+                    synchronized (this) {
+                        wait();
+                    }
+
+                }catch (InterruptedException e){
+                    ConsoleHelper.writeMessage("Не удалось установить соединение");
+                    return;
+                }
+
+        if(clientConnected) ConsoleHelper.writeMessage("Соединение установлено.\n" + "Для выхода наберите команду 'exit'.");
+                else ConsoleHelper.writeMessage("Произошла ошибка во время работы клиента.");
+
+        String str = "";
+
+        while (clientConnected){
+            str = ConsoleHelper.readString() ;
+
+            if(str == "exit") break;
+
+            if(shouldSendTextFromConsole() == true){
+                sendTextMessage(str);
+            }
+        }
+    }
+
+    public static void main(String[] args){
+        Client client = new Client();
+        client.run();
+    }
 }

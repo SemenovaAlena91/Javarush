@@ -1,4 +1,6 @@
 package com.javarush.task.task30.task3008;
+import com.javarush.task.task30.task3008.client.Client;
+
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -104,6 +106,7 @@ public class Server {
                 Handler handler = new Handler(socket);
                 handler.start();
             }
+
         }catch (IOException e){
             ConsoleHelper.writeMessage("Произошла ошибка");
 
