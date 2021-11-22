@@ -60,7 +60,7 @@ public class Client {
         };
 
         protected void informAboutDeletingNewUser(String userName){
-            ConsoleHelper.writeMessage("Участник с именем "+ userName + " покинул чат.");
+            ConsoleHelper.writeMessage("Участник с именем "+ userName +  " покинул чат.");
         }
 
         protected void notifyConnectionStatusChanged(boolean clientConnected){
