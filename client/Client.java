@@ -78,7 +78,7 @@ public class Client {
                     }
 
                 }catch (InterruptedException e){
-                    ConsoleHelper.writeMessage("Не удалось установить соединение");
+                    ConsoleHelper.writeMessage("Не удалось установить соединение.");
                     return;
                 }
 
