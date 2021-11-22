@@ -7,6 +7,8 @@ import com.javarush.task.task30.task3008.MessageType;
 
 import java.io.IOException;
 
+import static com.javarush.task.task30.task3008.MessageType.NAME_REQUEST;
+
 public class Client {
     protected Connection connection;
     private volatile boolean clientConnected = false;
@@ -65,6 +67,39 @@ public class Client {
                 Client.this.notify();
             }
         }
+
+        protected void clientHandshake() throws IOException, ClassNotFoundException {
+            //Этот метод будет представлять клиента серверу.
+            while (true){
+                Message message = connection.receive();
+                if(message.getType() == NAME_REQUEST){
+                    String userName = getUserName();
+                    connection.send(new Message(MessageType.USER_NAME,userName));
+                } else if (message.getType() == MessageType.NAME_ACCEPTED){
+                    notifyConnectionStatusChanged(true);
+                    break;
+                } else {
+                    throw new IOException("Unexpected MessageType");
+                }
+            }
+        }
+
+        protected void clientMainLoop() throws IOException, ClassNotFoundException{
+            //главный цикл обработки сообщений сервера
+            while (true){
+                Message message = connection.receive();
+                if(message.getType() == MessageType.TEXT){
+                    processIncomingMessage(message.getData());
+                } else if (message.getType() == MessageType.USER_ADDED){
+                    informAboutAddingNewUser(message.getData());
+                } else if (message.getType() == MessageType.USER_REMOVED){
+                    informAboutDeletingNewUser(message.getData());
+                }
+                else {
+                    throw new IOException("Unexpected MessageType");
+                }
+            }
+        }
     }
 
     public void run(){
@@ -78,7 +113,7 @@ public class Client {
                     }
 
                 }catch (InterruptedException e){
-                    ConsoleHelper.writeMessage("Не удалось установить соединение.");
+                    ConsoleHelper.writeMessage("Не удалось установить соединение");
                     return;
                 }
 
